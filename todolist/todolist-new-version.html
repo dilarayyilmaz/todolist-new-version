@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <style>
+
+    body {
+  font-family: 'Roboto', Arial, sans-serif;
+  background: url('background.jpg') no-repeat center center fixed;
+  background-size: cover;
+  margin: 0;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+    
+    .container {
+  background: url('background.jpg') no-repeat center center;
+  background-size: cover;
+  width: 900px;
+  padding: 20px 30px 40px 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  min-height: 600px;
+}
+
+    
+    h1 {
+      text-align: center;
+      color: #8d1818;
+      margin-bottom: 25px;
+      user-select: none;
+    }
+    
+    form {
+      display: flex;
+      margin-bottom: 20px;
+      gap: 0;
+    }
+    
+    input[type="text"] {
+      flex-grow: 1;
+      padding: 12px 15px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 4px 0 0 4px;
+      outline: none;
+      transition: border-color 0.3s ease;
+    }
+    input[type="text"]:focus {
+      border-color: #5b9bd5;
+      background-color: #f5faff;
+    }
+    
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      background-color: #5b9bd5;
+      color: white;
+      border: none;
+      border-radius: 0 4px 4px 0;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    button:hover {
+      background-color: #4a86c5;
+    }
+    
+    .columns {
+      display: flex;
+      gap: 20px;
+      flex-grow: 1;
+      overflow: hidden;
+    }
+    
+    .column {
+      flex: 1;
+      background: #f0f0f0;
+      padding: 15px 10px;
+      border-radius: 8px;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .column h2 {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #333;
+      user-select: none;
+    }
+    
+    
+    ul {
+      list-style: none;
+      padding-left: 0;
+      flex-grow: 1;
+      overflow-y: auto;
+      min-height: 200px;
+      margin: 0;
+    }
+    
+    li {
+      background: #fff;
+      margin-bottom: 10px;
+      padding: 10px 15px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      cursor: grab;
+      user-select: none;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: background-color 0.3s ease;
+    }
+    li:active {
+      cursor: grabbing;
+      background-color: #e1e7f0;
+    }
+    
+    li.completed span.task-text {
+      text-decoration: line-through;
+      color: #888;
+    }
+    
+    
+    li span.task-text {
+      flex-grow: 1;
+      cursor: pointer;
+      min-width: 100px;
+    }
+    
+
+    li button.delete-btn {
+      background: transparent;
+      border: none;
+      color: #c0392b;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 18px;
+      margin-left: 10px;
+      padding: 0 5px;
+      line-height: 1;
+      user-select: none;
+      transition: color 0.2s ease;
+    }
+    li button.delete-btn:hover {
+      color: #a72820;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>ToDoList</h1>
+  
+  
+  <form id="taskForm">
+    <input type="text" id="taskInput" placeholder="Yeni görev..." required />
+    <button type="submit" aria-label="Görev Ekle">Ekle</button>
+  </form>
+
+  <div class="columns">
+    <div class="column" id="todo-column">
+      <h2>To Do</h2>
+      <ul id="todoList" class="task-list" data-status="todo"></ul>
+    </div>
+    <div class="column" id="inprogress-column">
+      <h2>In Progress</h2>
+      <ul id="inprogressList" class="task-list" data-status="inprogress"></ul>
+    </div>
+    <div class="column" id="done-column">
+      <h2>Done</h2>
+      <ul id="doneList" class="task-list" data-status="done"></ul>
+    </div>
+  </div>
+
+
+<script>
+ 
+  const taskForm = document.getElementById('taskForm');
+  const taskInput = document.getElementById('taskInput');
+  const todoList = document.getElementById('todoList');
+  const inprogressList = document.getElementById('inprogressList');
+  const doneList = document.getElementById('doneList');
+
+
+  let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+  
+  function renderTasks() {
+    todoList.innerHTML = '';
+    inprogressList.innerHTML = '';
+    doneList.innerHTML = '';
+
+    tasks.forEach((task, index) => {
+      const li = document.createElement('li');
+      li.setAttribute('draggable', 'true');
+      li.dataset.index = index;
+      if (task.completed) li.classList.add('completed');
+
+      const span = document.createElement('span');
+      span.textContent = task.text;
+      span.className = 'task-text';
+
+    
+      span.addEventListener('click', () => {
+        tasks[index].completed = !tasks[index].completed;
+        saveAndRender();
+      });
+
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = '×';
+      deleteBtn.className = 'delete-btn';
+      deleteBtn.title = 'Görevi sil';
+      deleteBtn.addEventListener('click', () => {
+        tasks.splice(index, 1);
+        saveAndRender();
+      });
+
+      li.appendChild(span);
+      li.appendChild(deleteBtn);
+
+      
+      li.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', index);
+        e.dataTransfer.effectAllowed = "move";
+      });
+
+
+      if (task.status === 'todo') {
+        todoList.appendChild(li);
+      } else if (task.status === 'inprogress') {
+        inprogressList.appendChild(li);
+      } else {
+        doneList.appendChild(li);
+      }
+    });
+  }
+
+  
+  function saveAndRender() {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    renderTasks();
+  }
+
+
+  taskForm.addEventListener('submit', e => {
+    e.preventDefault();
+    const newTaskText = taskInput.value.trim();
+    if (newTaskText === '') return;
+
+    tasks.push({ text: newTaskText, completed: false, status: 'todo' });
+    taskInput.value = '';
+    saveAndRender();
+  });
+
+  
+  document.querySelectorAll('.task-list').forEach(list => {
+    list.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    });
+
+    list.addEventListener('drop', e => {
+      e.preventDefault();
+      const draggedIndex = e.dataTransfer.getData('text/plain');
+      const newStatus = list.dataset.status;
+
+      if (tasks[draggedIndex]) {
+        tasks[draggedIndex].status = newStatus;
+        saveAndRender();
+      }
+    });
+  });
+
+ 
+  renderTasks();
+</script>
+
+</body>
+</html>
